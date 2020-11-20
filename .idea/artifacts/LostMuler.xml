@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="LostMuler">
+    <output-path>$USER_HOME$/DreamBot/Scripts</output-path>
+    <root id="archive" name="LostMuler.jar">
+      <element id="module-output" name="LostMuler" />
+      <element id="extracted-dir" path="$USER_HOME$/DreamBot/BotData/gson-2.8.5.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
