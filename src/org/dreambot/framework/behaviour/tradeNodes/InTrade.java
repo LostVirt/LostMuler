@@ -43,6 +43,7 @@ public class InTrade extends Node<Main> {
         if (Trade.isOpen(2)) {
             Api.incomingValue = TradeHandler.getTradeAmount(false);
             Api.outgoingValue = TradeHandler.getTradeAmount(true);
+            MethodProvider.log("Incoming: " + Api.incomingValue + " Outgoing: " +  Api.outgoingValue);
             if (Trade.acceptTrade(2)) {
                 MethodProvider.sleepUntil(() -> !Trade.isOpen(), 5000 + Api.sleep());
             }

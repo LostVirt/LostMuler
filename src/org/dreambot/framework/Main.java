@@ -13,8 +13,12 @@ import org.dreambot.api.script.listener.ChatListener;
 import org.dreambot.api.utilities.Timer;
 import org.dreambot.api.wrappers.widgets.message.Message;
 import org.dreambot.framework.Handlers.SocketHandler;
+import org.dreambot.framework.Handlers.TradeHandler;
 import org.dreambot.framework.behaviour.*;
 import org.dreambot.framework.behaviour.antiFailNodes.*;
+import org.dreambot.framework.behaviour.tradeNodes.DepositBank;
+import org.dreambot.framework.behaviour.tradeNodes.InTrade;
+import org.dreambot.framework.behaviour.tradeNodes.TradeBot;
 import org.dreambot.framework.gui.ScriptFrame;
 import org.dreambot.framework.Api.Api;
 import org.dreambot.framework.nodes.DrawMouseUtil;
@@ -33,7 +37,7 @@ import java.io.IOException;
 public class Main extends AbstractScript implements ChatListener, PaintInfo {
 
     private NodeManager<Main> nodeManager;
-    private TreeNode<Main> antiTree;
+    private TreeNode<Main> antiTree, muleTree;
 
     private Timer runTimer;
     private final DrawMouseUtil drawMouseUtil = new DrawMouseUtil();
@@ -69,6 +73,7 @@ public class Main extends AbstractScript implements ChatListener, PaintInfo {
         nodeManager = new NodeManager<>();
 
         antiTree = new AntiFailTree();
+        muleTree = new TradeTree();
 
         nodeManager.addNodes(
                 antiTree.addChildren(
@@ -86,14 +91,24 @@ public class Main extends AbstractScript implements ChatListener, PaintInfo {
                         new DisableAcceptAid(),
                         new DisableSound(),
                         new NpcAttackOptions())
+                ,
+                muleTree.addChildren(
+                        new InTrade(),
+                        new DepositBank(),
+                        new TradeBot())
+                ,
+                new LogOut()
+
         );
 
     }
 
     public static boolean loginButton = false;
     private boolean hasLoggedInYet = false;
+    private boolean startServer = false;
     @Override
     public int onLoop() {
+
         if (loginButton) {
             if (hasLoggedInYet) {
                 if (!Client.isLoggedIn()) {
@@ -113,17 +128,28 @@ public class Main extends AbstractScript implements ChatListener, PaintInfo {
             return 500;
         }
 
-        if (Client.isLoggedIn()) {
-            if (Api.standArea == null) {
-                Api.standArea = Players.localPlayer().getTile().getArea(1);
-            }
-            disableSolver(RandomEvent.LOGIN);
-        }
-
         if (gui.startScript) {
+            if (!Client.isLoggedIn()) {
+                if (startServer) {
+                    Api.server = new SocketHandler("Mule", Api.mulePort);
+                    Api.server.start();
+                    startServer = false;
+                }
 
+                if (Api.server.getBotIdentifier() != null) {
+                    enableSolver(RandomEvent.LOGIN);
+                    return Api.sleep();
+                }
+                Api.hasMuled = false;
+            } else {
+                if (Api.standArea == null) {
+                    Api.standArea = Players.localPlayer().getTile().getArea(1);
+                }
+                disableSolver(RandomEvent.LOGIN);
+            }
         }
         return gui.startScript ? this.nodeManager.onLoop(this) : 500;
+
     }
 
     @Override
@@ -187,14 +213,21 @@ public class Main extends AbstractScript implements ChatListener, PaintInfo {
 
     @Override
     public void onGameMessage(Message message) {
-        Api.gameMessage = message.getMessage();
-        if (message.getMessage().toLowerCase().contains("accepted trade")) {
-            Api.server = new SocketHandler("Mule", Api.mulePort);
-            Api.hasMuled = true;
-            Api.totalIncoming += Api.incomingValue;
-            Api.totalOutgoing += Api.outgoingValue;
-            Api.totalCoins = Inventory.count(item -> item != null && item.getID() == 995);
-            Api.state = "Successfully Traded!";
+        if (!hasLoggedInYet && !loginButton) {
+            Api.gameMessage = message.getMessage();
+            if (message.getMessage().toLowerCase().contains("accepted trade")) {
+                try {
+                    Api.server.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                startServer = true;
+                Api.hasMuled = true;
+                Api.totalIncoming += Api.incomingValue;
+                Api.totalOutgoing += Api.outgoingValue;
+                Api.totalCoins = Inventory.count(item -> item != null && item.getID() == 995);
+                Api.state = "Successfully Traded!";
+            }
         }
     }
 

@@ -33,6 +33,7 @@ public class TradeBot extends Node<Main> {
                 MethodProvider.sleepUntil(() -> Api.gameMessage.equals("Sending trade offer...") || Trade.isOpen(), 1500 + Api.sleep());
             }
         }
+
         return Api.sleep();
     }
 

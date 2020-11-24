@@ -34,8 +34,6 @@ public class SocketHandler implements Runnable {
     private ServerSocket server = null;
     private DataInputStream in = null;
 
-    private boolean running = true;
-
     @Override
     public void run() {
         this.serverState = "Loading Server";
@@ -65,7 +63,13 @@ public class SocketHandler implements Runnable {
             this.serverState = "Closing connection";
         } catch (IOException e) {
             MethodProvider.log(e.getMessage());
-        } finally {
+        }
+
+        MethodProvider.log("Stopped Thread");
+    }
+
+    /*
+     finally {
             try {
                 this.serverState = "Closed Connection";
                 close();
@@ -73,8 +77,7 @@ public class SocketHandler implements Runnable {
                 e.printStackTrace();
             }
         }
-        MethodProvider.log("Stopped Thread");
-    }
+     */
 
     public void start() {
         if (this.thread == null) {
@@ -84,9 +87,9 @@ public class SocketHandler implements Runnable {
         }
     }
 
-    public void stop() {
+    public void stop() throws IOException {
         MethodProvider.log("Stopping Thread..");
-        this.running = false;
+        close();
     }
 
 
